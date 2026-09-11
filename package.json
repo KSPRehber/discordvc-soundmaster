@@ -1,0 +1,21 @@
+{
+  "name": "discord-tts",
+  "version": "1.0.0",
+  "description": "Discord bot that reads a voice channel's text chat aloud using ElevenLabs TTS",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@discordjs/opus": "^0.10.0",
+    "@discordjs/voice": "^0.19.2",
+    "@snazzah/davey": "^0.1.12",
+    "discord.js": "^14.16.3",
+    "dotenv": "^16.4.5",
+    "libsodium-wrappers": "^0.7.15"
+  },
+  "allowScripts": {
+    "@discordjs/opus@0.10.0": true
+  }
+}
