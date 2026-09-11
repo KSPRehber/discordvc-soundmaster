@@ -97,8 +97,18 @@ function ytInfo(query) {
         "-J", query,
       ],
       { maxBuffer: 16 * 1024 * 1024 },
-      (err, stdout) => {
-        if (err) return reject(new Error("yt-dlp lookup failed"));
+      (err, stdout, stderr) => {
+        if (err) {
+          if (/Sign in to confirm/i.test(stderr ?? "")) {
+            return reject(
+              new Error(
+                "YouTube bot-check blocked this video from the server. Try searching the song title instead of using the link."
+              )
+            );
+          }
+          const detail = (stderr ?? "").match(/ERROR: (?:\[[^\]]+\] )?(.{0,120})/);
+          return reject(new Error(detail?.[1] ?? "yt-dlp lookup failed"));
+        }
         let data;
         try {
           data = JSON.parse(stdout);
