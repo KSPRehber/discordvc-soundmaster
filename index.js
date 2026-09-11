@@ -41,6 +41,11 @@ const MAX_LEN = Number(MAX_MESSAGE_LENGTH) || 500;
 const localYtdlp = path.join(import.meta.dirname, "yt-dlp");
 const YTDLP = existsSync(localYtdlp) ? localYtdlp : "yt-dlp";
 
+// YouTube bot-checks datacenter IPs; a cookies.txt (Netscape format) in the
+// project root makes requests look like a logged-in session
+const cookiesFile = path.join(import.meta.dirname, "cookies.txt");
+const COOKIE_ARGS = existsSync(cookiesFile) ? ["--cookies", cookiesFile] : [];
+
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -94,6 +99,7 @@ function ytInfo(query) {
         "--no-playlist",
         "--flat-playlist",
         "--no-warnings",
+        ...COOKIE_ARGS,
         "-J", query,
       ],
       { maxBuffer: 16 * 1024 * 1024 },
@@ -128,11 +134,21 @@ function ytInfo(query) {
 }
 
 function ytStream(url) {
-  return spawn(
+  const child = spawn(
     YTDLP,
-    ["-f", "bestaudio/best", "-o", "-", "--quiet", "--no-warnings", url],
-    { stdio: ["ignore", "pipe", "ignore"] }
+    ["-f", "bestaudio/best", "-o", "-", "--quiet", "--no-warnings", ...COOKIE_ARGS, url],
+    { stdio: ["ignore", "pipe", "pipe"] }
   );
+  let errBuf = "";
+  child.stderr.on("data", (d) => {
+    if (errBuf.length < 2000) errBuf += d;
+  });
+  child.on("close", (code) => {
+    if (code !== 0 && code !== null && errBuf) {
+      console.error(`yt-dlp stream failed (${url}):`, errBuf.slice(0, 300));
+    }
+  });
+  return child;
 }
 
 function fmtDuration(seconds) {
